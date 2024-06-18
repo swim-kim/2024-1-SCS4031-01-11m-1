@@ -98,7 +98,7 @@ const CancelButton = styled.button`
     cursor: pointer;
 `;
 
-function Addproduct( { onClose }) {
+function AddProduct( { onClose }) {
     const [uploadedImage, setUploadedImage] = useState(null);
     const [productName, setProductName] = useState('');
     const [productDescription, setProductDescription] = useState('');
@@ -178,4 +178,4 @@ function Addproduct( { onClose }) {
     );
 }
 
-export default Addproduct;
+export default AddProduct;

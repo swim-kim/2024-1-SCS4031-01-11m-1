@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import ProductMinuteName from '../management/addminute/MinuteTitle';
-import ProductMinute from '../management/addminute/MinuteFile';
+import ProductMinuteName from './addminute/MinuteTitle';
+import ProductMinute from './addminute/MinuteFile';
 
 const ModalOverlay = styled.div`
     position: fixed;
@@ -95,7 +95,7 @@ const CancelButton = styled.button`
     cursor: pointer;
 `;
 
-function Addminute( { onClose }) {
+function AddMinute( { onClose }) {
     const [productMinuteName, setproductMinuteName] = useState('');
     const [productMinute, setproductMinute] = useState('');
 
@@ -161,4 +161,4 @@ function Addminute( { onClose }) {
     );
 }
 
-export default Addminute;
+export default AddMinute;

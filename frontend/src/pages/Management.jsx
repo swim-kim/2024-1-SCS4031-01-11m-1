@@ -6,8 +6,8 @@ import ProductTable from "../components/management/ProductTable";
 import MeetingMinutesTable from "../components/management/MeetingMinutesTable";
 import CategoryTable from "../components/management/CategoryTable"
 import plusicon from '../components/image/plus_icon.png';
-import Addproduct from '../components/management/Addproduct';
-import Addminute from '../components/management/Addminute';
+import Addproduct from '../components/management/AddProduct';
+import Addminute from '../components/management/AddMinute';
 import Addcategory from '../components/management/AddCategory';
 
 
