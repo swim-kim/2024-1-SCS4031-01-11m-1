@@ -127,7 +127,7 @@ const ErrorMessage = styled.p`
 `;
 
 function Signup() {
-    const [username, setUsername] = useState('');
+    const [memberName, setMemberName] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -135,7 +135,7 @@ function Signup() {
   
     const payload = {
       name: name,
-      username: username,
+      memberName: memberName,
       password: password,
     };
   
@@ -148,7 +148,7 @@ function Signup() {
           },
           body: JSON.stringify(payload),
         });
-  
+        console.log(payload);
         if (response.status === 201) {
           console.log('Registration successful:');
           navigate('/login');
@@ -178,8 +178,8 @@ function Signup() {
               <Input
                 type="text"
                 placeholder="Full Name"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={memberName}
+                onChange={(e) => setMemberName(e.target.value)}
               />
               <Input
                 type="text"

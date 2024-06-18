@@ -6,10 +6,9 @@ import ProductTable from "../components/management/ProductTable";
 import MeetingMinutesTable from "../components/management/MeetingMinutesTable";
 import CategoryTable from "../components/management/CategoryTable"
 import plusicon from '../components/image/plus_icon.png';
-import Addproduct from '../../components/management/AddProduct.jsx';
-import Addminute from '../components/management/AddMinute.jsx';
+import Addproduct from '../components/management/AddProduct.jsx';
 import Addcategory from '../components/management/AddCategory.jsx';
-
+import Addminute from '../components/management/AddMinute.jsx';
 
 const Container = styled.div`
     width: 100%;
