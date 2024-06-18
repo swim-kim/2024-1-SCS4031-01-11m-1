@@ -6,9 +6,9 @@ import ProductTable from "../components/management/ProductTable";
 import MeetingMinutesTable from "../components/management/MeetingMinutesTable";
 import CategoryTable from "../components/management/CategoryTable"
 import plusicon from '../components/image/plus_icon.png';
-import Addproduct from '../components/management/AddProduct.jsx';
-import Addcategory from '../components/management/AddCategory.jsx';
-import Addminute from '../components/management/AddMinute.jsx';
+import AddProduct from '../components/management/AddProduct.jsx';
+import AddCategory from '../components/management/AddCategory.jsx';
+import AddMinute from '../components/management/AddMinute.jsx';
 
 const Container = styled.div`
     width: 100%;
@@ -167,9 +167,9 @@ function Management() {
                     )}
                 </ListContainer>
             </Container>
-            {showAddProductModal && <Addproduct onClose={handleCloseProductModal} />}
-            {showAddMinuteModal && <Addminute onClose={handleCloseMinuteModal} />}
-            {showAddCategoryModal && <Addcategory onClose={handleCloseCategoryModal} />}
+            {showAddProductModal && <AddProduct onClose={handleCloseProductModal} />}
+            {showAddMinuteModal && <AddMinute onClose={handleCloseMinuteModal} />}
+            {showAddCategoryModal && <AddCategory onClose={handleCloseCategoryModal} />}
         </>
     );
 }
