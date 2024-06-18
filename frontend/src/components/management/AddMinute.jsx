@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import Image from './addproduct/Image';
-import ProductName from './addproduct/ProductName';
-import ProductDescription from './addproduct/ProductDescription';
-import URL from './addproduct/Url';
-
+import ProductMinuteName from './addminute/MinuteTitle';
+import ProductMinute from './addminute/MinuteFile';
 
 const ModalOverlay = styled.div`
     position: fixed;
@@ -22,7 +19,7 @@ const ModalOverlay = styled.div`
 
 const Container = styled.div`
     width: 307px;
-    height: 552px;
+    height: 301px;  
     border-radius: 10px;
     background: #FFF;
     padding: 26px;
@@ -41,7 +38,7 @@ const Line = styled.p`
     width: 250px;
     height: 1px;
     background: #D9D9D9;
-    margin-top: 28px;
+    margin-top: 35px;
 `;
 
 const ButtonContainer = styled.div`
@@ -98,61 +95,49 @@ const CancelButton = styled.button`
     cursor: pointer;
 `;
 
-function AddProduct( { onClose }) {
-    const [uploadedImage, setUploadedImage] = useState(null);
-    const [productName, setProductName] = useState('');
-    const [productDescription, setProductDescription] = useState('');
-    const [url, setUrl] = useState('');
+function AddMinute( { onClose }) {
+    const [productMinuteName, setproductMinuteName] = useState('');
+    const [productMinute, setproductMinute] = useState('');
 
-    const handleImageUpload = (image) => {
-        setUploadedImage(image);
-    };
-    const handleProductNameChange = (productName) => {
-        setProductName(productName);
-    };
-    const handleProductDescriptionChange = (productDescription) => {
-        setProductDescription(productDescription);
-    };
-    const handleUrlChange = (newUrl) => {
-        setUrl(newUrl);
+    const handleproductMinuteName = (productMinuteName) => {
+        setproductMinuteName(productMinuteName);
     };
 
-
+    const handleproductMinute = (productMinute) => {
+        setproductMinute(productMinute);
+    }
+    
     const handleSave = () => {
         const userInfo = JSON.parse(localStorage.getItem("userInfo"));
         const accessToken = userInfo ? userInfo.accessToken : null;
-    
-        // FormData 객체 생성
-        const formData = new FormData();
-        formData.append('productName', productName);
-        formData.append('productDescription', productDescription);
-        formData.append('productUrl', url);
-        formData.append('productImage', uploadedImage); 
         
-         
-        // POST 요청
-        fetch('http://15.165.14.203/api/member-data/add-product', {
+        const formData = new FormData();
+        formData.append('productMinuteName', productMinuteName);
+        formData.append('productMinute', productMinute);
+
+        //POST 요청
+        fetch('http://15.165.14.203/api/member-data/add-product-minute', {
             method: 'POST',
             headers: {
-                // 'Content-type': 'multipart/form-data',
-                'Authorization': `Bearer ${accessToken}`,  
+                'Authorization': `Bearer ${accessToken}`,
             },
-            body:formData 
+            body:formData
         })
         .then(response => {
             if (response.ok) {
-                console.log('Product added successfully');
+                console.log('Minute added successfully');
                 onClose();
                 window.location.reload();
             } else {
-                console.error('Failed to add product');
+                console.error('Failed to add minute');
+           
             }
         })
         .catch(error => {
             console.error('Error:', error);
         });
-        
     };
+
     const handleCancel = () => {
         onClose();
     };
@@ -161,11 +146,9 @@ function AddProduct( { onClose }) {
         <ModalOverlay>
             
                 <Container>
-                    <Title>Add product</Title>
-                    <Image onImageUpload={handleImageUpload} />
-                    <ProductName onChange={handleProductNameChange} />
-                    <ProductDescription onChange={handleProductDescriptionChange} />
-                    <URL onChange={handleUrlChange} />
+                    <Title>Add Minute</Title>
+                    <ProductMinuteName onChange={handleproductMinuteName} />
+                    <ProductMinute onFileUpload={handleproductMinute} />
                     <Line />
                     <ButtonContainer>
                         <CancelButton onClick={handleCancel}>Cancel</CancelButton>
@@ -178,4 +161,4 @@ function AddProduct( { onClose }) {
     );
 }
 
-export default AddProduct;
+export default AddMinute;
