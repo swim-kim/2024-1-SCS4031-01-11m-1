@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ReportEntity } from "../entity/report.entity";
-import { Repository} from 'typeorm';
+import { Repository, Between, In } from 'typeorm';
 import { AuthService } from "src/auth/auth.service";
 import { MemberEntity } from "src/auth/member.entity";
 import { CategoryService } from "../../category/category.service";
@@ -17,6 +17,10 @@ import { KeywordsBySentimentCtg, VocAnalysisesAndCategory, customRAGresult } fro
 import { ProductEntity } from "src/member-data/products/entities/product.entity";
 import { ReportListDto } from "./dto/report-list.dto";
 import { ReportMapper } from "./mapper/report-mapper";
+import { CountPerCategoryDto } from "./dto/count-per-category.dto";
+import { VocEntity } from "src/voc/entity/voc.entity";
+import { ReportDto } from "./dto/report.dto";
+import { UrlEntity } from "src/member-data/products/entities/url.entity";
 
 @Injectable()
 export class ReportService {
@@ -30,7 +34,15 @@ export class ReportService {
     @InjectRepository(ProductMinuteEntity)
     private readonly productMinuteRepository: Repository<ProductMinuteEntity>,
     @InjectRepository(ProductEntity)
-    private readonly productRepository: Repository<ProductEntity>
+    private readonly productRepository: Repository<ProductEntity>,
+    @InjectRepository(MemberEntity)
+    private readonly memberRepository: Repository<MemberEntity>,
+    @InjectRepository(CategoryEntity)
+    private readonly categoryRepository: Repository<CategoryEntity>,
+    @InjectRepository(VocAnalysisEntity)
+    private readonly vocAnalysisRepository: Repository<VocAnalysisEntity>,
+    @InjectRepository(VocEntity)
+    private readonly vocRepository: Repository<VocEntity>
   ){}
 
   @Transactional()
@@ -101,10 +113,73 @@ export class ReportService {
     return reportListDtos
   };
 
-  async loadReport(reportId: string): Promise<ReportEntity>{
+  async loadReport(reportId: string): Promise<ReportDto>{
     const report: ReportEntity = await this.reportRepository.findOneBy({id: reportId});
+    const vocCountMap:Map<string,number[]> = new Map();
+    const categoryMap:Map<string, CategoryEntity> = new Map();
+    let day:number = report.createdAt.getDay()-1;
+    let date:Date = new Date(report.createdAt);
+    let nextWeekDate:Date;
+    let previousWeekDate:Date;
+    
+    const vocCountPerCategory: CountPerCategoryDto[] = [];
     this.nullCheckForEntity(report);
-    return report;
+
+    const member:MemberEntity = report.member;
+    const product:ProductEntity = await this.productRepository.findOne({
+      where:{member:member, productName:report.productName}
+    });
+    const urlIdList:string[] = [];
+    product.urls.forEach((url) => {urlIdList.push(url.id)});
+    (await this.categoryRepository.findBy({member: member})).forEach((category) => {
+      vocCountMap.set(category.categoryName, [0,0]);
+      categoryMap.set(category.categoryName, category);
+    });
+
+    if(day<0){
+      day = day + 7;
+    }
+
+    date.setDate(date.getDate()-day);
+    nextWeekDate = new Date(date);
+    nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+    previousWeekDate = new Date(date);
+    previousWeekDate.setDate(previousWeekDate.getDate() - 7);
+
+    console.log(date.toLocaleString())
+    console.log(nextWeekDate.toLocaleString());
+
+    const vocs:VocEntity[] = await this.vocRepository.find({
+      where: {
+        uploadedDate: Between(
+          date, nextWeekDate
+        ), url: In(urlIdList)
+      }
+    });
+
+    vocs.forEach((voc) => {
+      const categoryName:string = voc.vocAnalysis.category.categoryName
+      vocCountMap.get(categoryName)[0] = vocCountMap.get(categoryName)[0]+1
+    });
+
+    const previousVocs:VocEntity[] = await this.vocRepository.find({
+      where: {
+        uploadedDate: Between(
+          previousWeekDate, date
+        ), url: In(urlIdList)
+      }
+    });
+
+    previousVocs.forEach((voc) => {
+      const categoryName:string = voc.vocAnalysis.category.categoryName;
+      vocCountMap.get(categoryName)[1] = vocCountMap.get(categoryName)[1] + 1;
+    });
+
+    vocCountMap.forEach((vocCount, categoryName) => {
+      vocCountPerCategory.push(new CountPerCategoryDto(categoryName, categoryMap.get(categoryName).id, vocCount[1], vocCount[0]));
+    })
+
+    return ReportDto.createFromEntity(report, vocCountPerCategory);
   };
 
   @Transactional()
@@ -124,11 +199,19 @@ export class ReportService {
   };
 
   private async summarizeVocReviews(vocAnalysisByCtg:VocAnalysisesAndCategory):Promise<string[]>{
+    // const vocAnalysisResults = vocAnalysisByCtg.vocAnalysises;
+    // const vocEntities = [...new Set(vocAnalysisResults.map((result)=>{return result.voc}))];
+    // const vocReviews = vocEntities.map((result)=>{return result.description})
+    const vocReviews = await this.getVocDescription(vocAnalysisByCtg);
+    const vocSummarizeResults = await this.customOpenAI.chunkSummarize(vocReviews, vocAnalysisByCtg.categoryName);
+    return vocSummarizeResults;
+  }
+
+  private async getVocDescription(vocAnalysisByCtg:VocAnalysisesAndCategory):Promise<string[]>{
     const vocAnalysisResults = vocAnalysisByCtg.vocAnalysises;
     const vocEntities = [...new Set(vocAnalysisResults.map((result)=>{return result.voc}))];
     const vocReviews = vocEntities.map((result)=>{return result.description})
-    const vocSummarizeResults = await this.customOpenAI.chunkSummarize(vocReviews, vocAnalysisByCtg.categoryName);
-    return vocSummarizeResults;
+    return vocReviews;
   }
 
   private async createReportSource(ragResult: customRAGresult, keywordEntities: VocKeywordEntity[], vocAnalysisesGroupByCtg:VocAnalysisesAndCategory[], vocAnalysises: VocAnalysisEntity[]){
@@ -151,11 +234,12 @@ export class ReportService {
       };
 
       const vocAnalysisByCtg: VocAnalysisesAndCategory[] = vocAnalysisesGroupByCtg.filter( result => result.categoryName==categoryName );
+      const vocReviews: string[] = await this.getVocDescription(vocAnalysisByCtg[0]); // ToDo: voc review data
       const vocSummaries: string[] = await this.summarizeVocReviews(vocAnalysisByCtg[0]);
       
       const positiveCnt = vocAnalysises.filter(result => result.primarySentiment === 'positive' && result.category.categoryName==categoryName).length;
       const negativeCnt = vocAnalysises.filter(result => result.primarySentiment === 'negative' && result.category.categoryName==categoryName).length;
-      const categoryResult = ReportSource.create(categoryName, keywords, vocSummaries, answers, positiveCnt, negativeCnt)
+      const categoryResult = ReportSource.create(categoryName, keywords, vocSummaries,vocReviews, answers, positiveCnt, negativeCnt)
       return categoryResult;
   }
 
