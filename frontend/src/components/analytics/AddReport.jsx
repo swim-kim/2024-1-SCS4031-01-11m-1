@@ -3,10 +3,10 @@ import styled from 'styled-components';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { TailSpin } from 'react-loader-spinner';
-import Product from 'C:/Users/김수영/Desktop/react_workspace/2024-1-SCS4031-01-11m-1/frontend/src/components/analytics/addreport/Product.jsx'; 
-import Data from './addreport/Data'; 
-import Document from './addreport/Document'; 
-import DateRange from './addreport/DateRange'; 
+import Product from '../analytics/addreport/Product'; 
+import Data from '../analytics/addreport/Data'; 
+import Document from '../analytics/addreport/Document'; 
+import DateRange from '../analytics/addreport/DateRange'; 
 
 const ModalOverlay = styled.div`
     position: fixed;
