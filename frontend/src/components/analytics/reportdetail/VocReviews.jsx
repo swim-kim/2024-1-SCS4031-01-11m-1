@@ -30,7 +30,6 @@ const List = styled.div`
 const ReviewText = styled.p`
     margin: 0;
     padding:3px;
-    
     border-bottom: 0.1px solid #b8b8b8;
    
 `;
