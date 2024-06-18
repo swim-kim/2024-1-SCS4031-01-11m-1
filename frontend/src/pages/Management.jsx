@@ -6,9 +6,9 @@ import ProductTable from "../components/management/ProductTable";
 import MeetingMinutesTable from "../components/management/MeetingMinutesTable";
 import CategoryTable from "../components/management/CategoryTable"
 import plusicon from '../components/image/plus_icon.png';
-import Addproduct from '../components/management/AddProduct';
-import Addminute from '../components/management/AddMinute';
-import Addcategory from '../components/management/AddCategory';
+import Addproduct from '../../components/management/AddProduct.jsx';
+import Addminute from '../components/management/AddMinute.jsx';
+import Addcategory from '../components/management/AddCategory.jsx';
 
 
 const Container = styled.div`
