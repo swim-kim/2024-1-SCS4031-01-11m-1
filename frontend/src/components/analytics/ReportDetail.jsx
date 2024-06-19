@@ -64,7 +64,7 @@ const Container = styled.div`
 
 const LeftContainer = styled.div`
   width:680px; 
-  height: 800px; 
+  height: 900px; 
   flex-shrink: 0;
   border-radius: 5px;
   border: 1px solid #dfdfdf;
@@ -73,7 +73,7 @@ const LeftContainer = styled.div`
 
 const RightContainer = styled.div`
   width: 680px; 
-  height: 800px; 
+  height: 900px; 
   flex-shrink: 0;
   border-radius: 5px;
   border: 1px solid #dfdfdf;

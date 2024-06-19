@@ -52,7 +52,7 @@ const Answer = styled.div`
     white-space: pre-line;
     color: #333;
     font-family: 'Pretendard';
-    font-size: 15px;
+    font-size: 13px;
     font-style: normal;
     font-weight: 400;
     line-height: normal;

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import Navbar from "./Navbar";
-import Tab from "../components/management/Tab"
+import Tab from "../components/management/Tab";
 import ProductTable from "../components/management/ProductTable";
 import MeetingMinutesTable from "../components/management/MeetingMinutesTable";
-import CategoryTable from "../components/management/CategoryTable"
+import CategoryTable from "../components/management/CategoryTable";
 import plusicon from '../components/image/plus_icon.png';
 import AddProduct from '../components/management/AddProduct.jsx';
 import AddCategory from '../components/management/AddCategory.jsx';
 import AddMinute from '../components/management/AddMinute.jsx';
+import UpdateButton from '../components/management/UpdateButton.jsx';
+import ProductDropdown from '../components/management/ProductDropdown.jsx';
 
 const Container = styled.div`
     width: 100%;
@@ -38,6 +40,7 @@ const ListContainer = styled.div`
     border-radius: 10px;
     border: 1px solid #DFDFDF;
     background: #FFF;
+    position: relative;
 `;
 
 const AddProductbtn = styled.button`
@@ -96,12 +99,26 @@ const Addicon = styled.div`
     flex-shrink: 0;
 `;
 
+const UpdateContainer = styled.div`
+    display: flex;
+    width: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    position: absolute;
+    right: 5%;
+    top: 10%;
+`;
+
 function Management() {
     const [activeTab, setActiveTab] = useState('Product');
     const [showAddProductModal, setShowAddProductModal] = useState(false);
     const [showAddMinuteModal, setShowAddMinuteModal] = useState(false);
     const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
-
+    const [selectedProductId, setSelectedProductId] = useState('');
+    const [loading, setLoading] = useState(false);
+    
     const handleTabChange = (tabName) => {
         setActiveTab(tabName);
     };
@@ -129,28 +146,89 @@ function Management() {
         setShowAddCategoryModal(false);
     }
 
+    const handleSelect = (productId) => {
+        setSelectedProductId(productId);
+    };
+    
+    const handleUpdate = async () => {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        const { accessToken, memberId } = userInfo;
+        if (!selectedProductId) {
+            alert('상품을 선택하세요.');
+            return;
+        }
+
+        setLoading(true);
+
+        const maxRetries = 3;
+        let attempt = 0;
+        let success = false;
+
+        while (attempt < maxRetries && !success) {
+            attempt++;
+            try {
+                const response = await fetch(`http://15.165.14.203/api/voc/updateVocByProductId/${selectedProductId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                    body: JSON.stringify({ productId: selectedProductId }),
+                });
+                console.log(selectedProductId);
+
+                if (!response.ok) {
+                    if (response.status === 504) {
+                        throw new Error('Gateway Timeout');
+                    }
+                    throw new Error('Failed to update product');
+                }
+
+                const data = await response.json();
+                console.log(`Product with ID ${selectedProductId} updated successfully`, data);
+                alert(`Product with ID ${selectedProductId} updated successfully`);
+                success = true;
+            } catch (error) {
+                if (error.message === 'Gateway Timeout') {
+                    console.error(`Attempt ${attempt} failed: ${error.message}`);
+                    if (attempt === maxRetries) {
+                        alert('The server is taking too long to respond. Please try again later.');
+                    }
+                } else {
+                    console.error('Error updating product:', error);
+                    alert('Error updating product');
+                    break;
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
     return (
         <>
             <Navbar />
             <Title>Management</Title>
+            <UpdateContainer>
+                <UpdateButton productId={selectedProductId} onClick={handleUpdate} />
+                <ProductDropdown onSelect={handleSelect} />
+            </UpdateContainer>
             <Container>
                 <ListContainer>
                     <Tab onTabChange={handleTabChange} />
-
                     {activeTab === 'Product' && (
                         <>
                             <AddProductbtn onClick={handleAddProductClick}>
-                                <Addicon src={plusicon} />
+                                <Addicon />
                                 Add Product
                             </AddProductbtn>
                             <ProductTable />
-                            
                         </>
                     )}
                     {activeTab === 'Meeting Minutes' && (
                         <>
                             <AddMinutebtn onClick={handleAddMinuteClick}>
-                                <Addicon src={plusicon} />
+                                <Addicon />
                                 Add minute
                             </AddMinutebtn>
                             <MeetingMinutesTable />
@@ -159,7 +237,7 @@ function Management() {
                     {activeTab === 'Category' && (
                         <>
                             <AddMinutebtn onClick={handleAddCategoryClick}>
-                                <Addicon src={plusicon} />
+                                <Addicon />
                                 Add category
                             </AddMinutebtn>
                             <CategoryTable />
@@ -170,6 +248,7 @@ function Management() {
             {showAddProductModal && <AddProduct onClose={handleCloseProductModal} />}
             {showAddMinuteModal && <AddMinute onClose={handleCloseMinuteModal} />}
             {showAddCategoryModal && <AddCategory onClose={handleCloseCategoryModal} />}
+            {loading && <div>Loading...</div>}
         </>
     );
 }

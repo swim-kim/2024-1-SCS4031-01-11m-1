@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import axios from 'axios';
 
 import morebutton_icon from '../image/morebutton_icon.png';
-import AddProduct from './AddProduct';
 
 const TableRow = styled.tr`
     border-bottom: 1px solid #ccc;
@@ -18,6 +18,7 @@ const TableCell = styled.td`
     font-weight: 400;
     line-height: normal;
     padding: 10px;
+    position: relative; /* Added for positioning options container */
 `;
 
 const MoreButton = styled.button`
@@ -32,8 +33,8 @@ const MoreButton = styled.button`
 
 const OptionsContainer = styled.div`
     position: absolute;
-    top: 40%;
-    left: 92%;
+    top: ${({ position }) => position.y}px;
+    left: ${({ position }) => position.x}px;
     z-index: 99;
     background-color: #fff;
     border: 1px solid #ccc;
@@ -61,21 +62,56 @@ const OptionButton = styled.button`
     }
 `;
 
-const Category = ({ categoryName }) => {
-    
-    
+const Category = ({ categoryName, categoryId, onDelete }) => {
+    const [contextMenuVisible, setContextMenuVisible] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+
+    const handleContextMenu = (event) => {
+        event.preventDefault();
+        setContextMenuPosition({ x: event.clientX, y: event.clientY });
+        setContextMenuVisible(true);
+    };
+
+    const handleDelete = async () => {
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+            const accessToken = userInfo ? userInfo.accessToken : null;
+            const memberId = userInfo ? userInfo.memberId : null;
+
+            if (!accessToken || !memberId) {
+                console.error('Access token or member ID not found');
+                return;
+            }
+
+            await axios.delete(`http://15.165.14.203/api/member-data/delete-category/${categoryId}`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            onDelete(categoryId);
+        } catch (error) {
+            console.error('Error deleting category:', error);
+        }
+        setContextMenuVisible(false);
+    };
+
     return (
-        <TableRow>
+        <TableRow onContextMenu={handleContextMenu}>
             <TableCell>
                 {categoryName}
+                <OptionsContainer visible={contextMenuVisible} position={contextMenuPosition}>
+                    <OptionButton onClick={handleDelete}>Delete</OptionButton>
+                </OptionsContainer>
             </TableCell>
         </TableRow>
     );
 };
 
-
 Category.propTypes = {
     categoryName: PropTypes.string.isRequired,
-}
+    categoryId: PropTypes.number.isRequired,
+    onDelete: PropTypes.func.isRequired,
+};
 
 export default Category;

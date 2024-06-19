@@ -1,53 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import PropTypes from 'prop-types';
 
 const StyledSelect = styled.select`
-  width: 80px;
+  width: 100px;
   height: 20px;
   flex-shrink: 0;
   border-radius: 5px;
   border: 1px solid #B4B4B4;
   background: #FFF;
-  font-size: 10px; 
+  font-size: 10px;
   color: #333;
-
 `;
 
 const ProductDropdown = ({ onSelect }) => {
   const [products, setProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        const accessToken = userInfo ? userInfo.accessToken : null;
-        const memberId = userInfo ? userInfo.memberId : null;
+        if (!userInfo) throw new Error('User info not found in localStorage');
+        
+        const { accessToken, memberId } = userInfo;
 
         const response = await fetch(`http://15.165.14.203/api/member-data/products/${memberId}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
+        
         if (!response.ok) {
-          throw new Error('상품 데이터를 불러오는 데 문제가 발생했습니다.');
+          throw new Error('Failed to fetch products');
         }
+        
         const data = await response.json();
         setProducts(data); // API에서 가져온 데이터를 상태에 설정
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        setError(error.message);
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProducts();
-  }, []); // 컴포넌트가 마운트될 때 한 번만 호출하도록 []를 빈 배열로 전달
+
+    return () => {
+      // Optionally, you can clear products on unmount
+      // setProducts([]);
+    };
+  }, []);
 
   const handleChange = (e) => {
     const selectedId = e.target.value;
     setSelectedProductId(selectedId);
-    // onSelect(selectedId); 
-    console.log(selectedId); // 콘솔에 선택된 상품의 ID 출력
+    onSelect(selectedId);
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <div>
       <StyledSelect value={selectedProductId} onChange={handleChange}>
@@ -60,6 +81,10 @@ const ProductDropdown = ({ onSelect }) => {
       </StyledSelect>
     </div>
   );
+};
+
+ProductDropdown.propTypes = {
+  onSelect: PropTypes.func.isRequired,
 };
 
 export default ProductDropdown;
